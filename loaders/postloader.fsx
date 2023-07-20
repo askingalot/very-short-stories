@@ -1,5 +1,6 @@
 #r "../_lib/Fornax.Core.dll"
 #r "../_lib/Markdig.dll"
+#load "globalloader.fsx"
 
 open System.IO
 open Markdig
@@ -78,7 +79,7 @@ let getContent (fileContent : string) =
 let trimString (str : string) =
     str.Trim().TrimEnd('"').TrimStart('"')
 
-let loadFile (rootDir: string) (n: string) =
+let loadFile (rootDir: string) (siteRoot: string) (n: string) =
     let text = File.ReadAllText n
 
     let config = getConfig text
@@ -94,7 +95,7 @@ let loadFile (rootDir: string) (n: string) =
         |> fun x -> x.[chopLength .. ]
 
     let file = Path.Combine(dirPart, (n |> Path.GetFileNameWithoutExtension) + ".md").Replace("\\", "/")
-    let link = "/" + Path.Combine(dirPart, (n |> Path.GetFileNameWithoutExtension) + ".html").Replace("\\", "/")
+    let link = siteRoot + Path.Combine(dirPart, (n |> Path.GetFileNameWithoutExtension) + ".html").Replace("\\", "/")
 
     let title = config |> Map.find "title" |> trimString
     let author = config |> Map.tryFind "author" |> Option.map trimString
@@ -117,12 +118,18 @@ let loadFile (rootDir: string) (n: string) =
       summary = summary }
 
 let loader (projectRoot: string) (siteContent: SiteContents) =
+    let siteRoot = 
+        siteContent.TryGetValue<Globalloader.SiteInfo> ()
+        |> Option.map(fun si -> si.siteRoot)
+        |> Option.defaultValue "/"
+
     let postsPath = Path.Combine(projectRoot, contentDir)
     let options = EnumerationOptions(RecurseSubdirectories = true)
     let files = Directory.GetFiles(postsPath, "*", options)
+
     files
     |> Array.filter (fun n -> n.EndsWith ".md")
-    |> Array.map (loadFile projectRoot)
+    |> Array.map (loadFile projectRoot siteRoot)
     |> Array.iter siteContent.Add
 
     siteContent.Add({disableLiveRefresh = false})

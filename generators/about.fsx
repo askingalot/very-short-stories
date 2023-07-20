@@ -46,4 +46,5 @@ let generate' (ctx: SiteContents) (_: string) =
                                 [ Class "card article" ]
                                 [ div [ Class "card-content" ] [ div [ Class "content article-body" ] [ !!about ] ] ] ] ] ] ]
 
-let generate (ctx: SiteContents) (projectRoot: string) (page: string) = generate' ctx page |> Layout.render ctx
+let generate (ctx: SiteContents) (projectRoot: string) (page: string) = 
+    generate' ctx page |> Layout.render ctx
